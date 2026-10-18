@@ -1,0 +1,74 @@
+project:
+  name: Augmented_mixed
+  work_dir: /path/to/project/My_Methods
+  opengait_root: /path/to/project/OpenGait
+  python: /path/to/conda/envs/hid2026/bin/python
+  gpus: "0"
+  nproc_per_node: 1
+  dry_run: false
+
+checkpoint:
+  pretrained_ckpt: /path/to/project/OpenGait/output/HID/Baseline/Baseline/checkpoints/Baseline-60000.pt
+
+training:
+  image_size: 128
+  lr: 0.003
+  weight_decay: 0.0005
+  momentum: 0.9
+  save_iter: 1000
+  log_iter: 100
+  fix_bn: true
+  optimizer_reset: true
+  scheduler_reset: true
+  batch_p: 16
+  batch_k: 4
+  frames_num_fixed: 48
+  sample_type: fixed_unordered
+  augmentation:
+    enabled: true
+    flip_prob: 0.2
+    rotate_prob: 0.2
+    rotate_degree: 8
+    erase_prob: 0.2
+    perspective_prob: 0.1
+
+datasets:
+  - name: CASIAB-boost
+    enabled: true
+    stage: 1
+    dataset_name: CASIA-B
+    dataset_root: /path/to/datasets/CASIAB-pkl
+    dataset_partition: /path/to/project/OpenGait/datasets/CASIA-B/CASIA-B_full_train.json
+    eval_func: evaluate_indoor_dataset
+    class_num: 124
+    stage_iters: 4000
+
+  - name: HID-refresh3
+    enabled: true
+    stage: 2
+    dataset_name: HID
+    dataset_root: /path/to/datasets/HID2022-pkl
+    dataset_partition: /path/to/project/OpenGait/datasets/HID/HID.json
+    eval_func: HID_submission
+    class_num: 500
+    stage_iters: 3000
+
+  - name: SUSTech-block3
+    enabled: true
+    stage: 3
+    dataset_name: SUSTech1K
+    dataset_root: /path/to/datasets/SUSTech1K-pkl
+    dataset_partition: /path/to/project/OpenGait/datasets/SUSTech1K/SUSTech1K.json
+    eval_func: evaluate_indoor_dataset
+    class_num: 1050
+    stage_iters: 4000
+
+  - name: HID-final
+    enabled: true
+    stage: 4
+    dataset_name: HID
+    dataset_root: /path/to/datasets/HID2022-pkl
+    dataset_partition: /path/to/project/OpenGait/datasets/HID/HID.json
+    eval_func: HID_submission
+    class_num: 500
+    stage_iters: 2000

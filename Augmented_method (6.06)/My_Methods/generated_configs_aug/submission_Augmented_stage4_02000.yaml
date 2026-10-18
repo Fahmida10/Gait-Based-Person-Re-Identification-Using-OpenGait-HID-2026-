@@ -1,0 +1,127 @@
+data_cfg:
+  dataset_name: HID
+  dataset_root: /path/to/HID2025_test_pkl
+  dataset_partition: /path/to/project/OpenGait/datasets/HID/HID2023.json
+  num_workers: 4
+  cache: false
+  remove_no_gallery: false
+  test_dataset_name: HID
+
+evaluator_cfg:
+  enable_float16: true
+  restore_ckpt_strict: false
+  restore_hint: /path/to/project/OpenGait/Checkpoint/Augmented_mixed_stage4_HID_final-02000.pt
+  save_name: submission_Augmented_stage4_02000
+  eval_func: HID_submission
+  sampler:
+    batch_shuffle: false
+    batch_size: 1
+    sample_type: all_ordered
+    frames_all_limit: 720
+  metric: euc
+  rerank: false
+  transform:
+    - type: Compose
+      trf_cfg:
+        - type: ResizeSilTransform
+          img_h: 128
+          img_w: 128
+          interpolation: nearest
+        - type: BaseSilCuttingTransform
+          img_w: 128
+
+loss_cfg:
+  - loss_term_weight: 1.0
+    margin: 0.2
+    type: TripletLoss
+    log_prefix: triplet
+  - loss_term_weight: 0.1
+    scale: 16
+    type: CrossEntropyLoss
+    log_prefix: softmax
+    log_accuracy: true
+
+model_cfg:
+  model: Baseline
+  backbone_cfg:
+    in_channels: 1
+    layers_cfg:
+      - BC-64
+      - BC-64
+      - M
+      - BC-128
+      - BC-128
+      - M
+      - BC-256
+      - BC-256
+      - M
+      - BC-512
+      - BC-512
+    type: Plain
+  SeparateFCs:
+    in_channels: 512
+    out_channels: 256
+    parts_num: 31
+  SeparateBNNecks:
+    class_num: 500
+    in_channels: 256
+    parts_num: 31
+  bin_num:
+    - 16
+    - 8
+    - 4
+    - 2
+    - 1
+
+optimizer_cfg:
+  solver: SGD
+  lr: 0.0003
+  momentum: 0.9
+  weight_decay: 0.0005
+
+scheduler_cfg:
+  scheduler: MultiStepLR
+  gamma: 0.1
+  milestones:
+    - 1200
+    - 1700
+
+trainer_cfg:
+  enable_float16: true
+  fix_BN: true
+  with_test: false
+  log_iter: 100
+  restore_ckpt_strict: false
+  restore_hint: /path/to/project/OpenGait/Checkpoint/Augmented_mixed_stage4_HID_final-02000.pt
+  optimizer_reset: true
+  scheduler_reset: true
+  save_iter: 2000
+  save_name: submission_Augmented_stage4_02000
+  sync_BN: true
+  total_iter: 2000
+  sampler:
+    type: TripletSampler
+    batch_shuffle: true
+    batch_size:
+      - 16
+      - 4
+    frames_num_fixed: 48
+    sample_type: fixed_unordered
+  transform:
+    - type: Compose
+      trf_cfg:
+        - type: ResizeSilTransform
+          img_h: 128
+          img_w: 128
+          interpolation: nearest
+        - type: BaseSilCuttingTransform
+          img_w: 128
+        - type: RandomHorizontalFlip
+          prob: 0.2
+        - type: RandomRotate
+          prob: 0.2
+          degree: 8
+        - type: RandomErasing
+          prob: 0.2
+        - type: RandomPerspective
+          prob: 0.1
